@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Personal Cartoon Studio</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f4f4f4;
+  color:#222;
+}
+header{
+  background:#222;
+  color:white;
+  padding:15px;
+  text-align:center;
+}
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+}
+.stage{
+  height:420px;
+  border-radius:20px;
+  background:linear-gradient(#8ed6ff,#dff6ff);
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  border:3px solid #ddd;
+}
+.ground{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:90px;
+  background:#72c66d;
+}
+.character{
+  position:relative;
+  z-index:2;
+  font-size:120px;
+  margin-bottom:55px;
+  cursor:pointer;
+}
+.controls{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:15px;
+}
+button,select,input{
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+button{
+  background:#222;
+  color:white;
+  cursor:pointer;
+}
+button:active{
+  transform:scale(.98);
+}
+.box{
+  background:white;
+  padding:15px;
+  margin-top:15px;
+  border-radius:15px;
+}
+textarea{
+  width:100%;
+  min-height:100px;
+  padding:12px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  font-size:16px;
+}
+@media(max-width:600px){
+  .stage{height:350px}
+  .controls{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🎬 My Personal Cartoon Studio</h2>
+<p>My own cartoon video creator</p>
+</header>
+
+<div class="container">
+
+<div class="stage" id="stage">
+  <div class="ground"></div>
+  <div class="character" id="character">👧</div>
+</div>
+
+<div class="controls">
+
+<button onclick="changeCharacter()">👤 Change Character</button>
+
+<button onclick="changeBackground()">🌄 Change Scene</button>
+
+<button onclick="speakText()">🔊 Speak Dialogue</button>
+
+<button onclick="animateCharacter()">🎭 Animate</button>
+
+</div>
+
+<div class="box">
+
+<h3>💬 Character Dialogue</h3>
+
+<textarea id="dialogue" placeholder="Type your character's dialogue here..."></textarea>
+
+<br><br>
+
+<label>🎙️ Voice:</label>
+
+<select id="voiceSelect">
+<option value="">Default device voice</option>
+</select>
+
+<br><br>
+
+<button onclick="speakText()">▶️ Play Voice</button>
+
+</div>
+
+<div class="box">
+
+<h3>💾 Project</h3>
+
+<button onclick="saveProject()">Save Project</button>
+<button onclick="loadProject()">Load Project</button>
+
+</div>
+
+</div>
+
+<script>
+
+let characters=["👧","👦","🧑","👩","👨","🧒"];
+let characterIndex=0;
+
+let backgrounds=[
+"linear-gradient(#8ed6ff,#dff6ff)",
+"linear-gradient(#ffcf70,#ff8a8a)",
+"linear-gradient(#9be7a5,#d8f5c2)",
+"linear-gradient(#b9a7ff,#e4dcff)"
+];
+
+let backgroundIndex=0;
+
+function changeCharacter(){
+  characterIndex++;
+  if(characterIndex>=characters.length){
+    characterIndex=0;
+  }
+
+  document.getElementById("character").textContent=
+  characters[characterIndex];
+}
+
+function changeBackground(){
+  backgroundIndex++;
+  if(backgroundIndex>=backgrounds.length){
+    backgroundIndex=0;
+  }
+
+  document.getElementById("stage").style.background=
+  backgrounds[backgroundIndex];
+}
+
+function animateCharacter(){
+
+  const character=document.getElementById("character");
+
+  character.animate([
+    {transform:"translateY(0) rotate(0deg)"},
+    {transform:"translateY(-80px) rotate(-8deg)"},
+    {transform:"translateY(0) rotate(8deg)"},
+    {transform:"translateY(-30px) rotate(0deg)"},
+    {transform:"translateY(0)"}
+  ],{
+    duration:1000,
+    iterations:1
+  });
+}
+
+function speakText(){
+
+  const text=document.getElementById("dialogue").value.trim();
+
+  if(!text){
+    alert("Please type a dialogue first.");
+    return;
+  }
+
+  speechSynthesis.cancel();
+
+  const speech=new SpeechSynthesisUtterance(text);
+
+  const select=document.getElementById("voiceSelect");
+
+  if(select.value){
+    const voices=speechSynthesis.getVoices();
+    const voice=voices[Number(select.value)];
+
+    if(voice){
+      speech.voice=voice;
+    }
+  }
+
+  speech.lang="hi-IN";
+  speech.rate=1;
+  speech.pitch=1;
+
+  speechSynthesis.speak(speech);
+}
+
+function loadVoices(){
+
+  const select=document.getElementById("voiceSelect");
+
+  select.innerHTML=
+  '<option value="">Default device voice</option>';
+
+  const voices=speechSynthesis.getVoices();
+
+  voices.forEach((voice,index)=>{
+
+    const option=document.createElement("option");
+
+    option.value=index;
+
+    option.textContent=
+    voice.name+" ("+voice.lang+")";
+
+    select.appendChild(option);
+
+  });
+}
+
+speechSynthesis.onvoiceschanged=loadVoices;
+
+loadVoices();
+
+function saveProject(){
+
+  const project={
+    character:characterIndex,
+    background:backgroundIndex,
+    dialogue:document.getElementById("dialogue").value
+  };
+
+  localStorage.setItem(
+    "myCartoonProject",
+    JSON.stringify(project)
+  );
+
+  alert("Project saved on this device.");
+}
+
+function loadProject(){
+
+  const saved=
+  localStorage.getItem("myCartoonProject");
+
+  if(!saved){
+    alert("No saved project found.");
+    return;
+  }
+
+  const project=JSON.parse(saved);
+
+  characterIndex=project.character||0;
+  backgroundIndex=project.background||0;
+
+  document.getElementById("character").textContent=
+  characters[characterIndex];
+
+  document.getElementById("stage").style.background=
+  backgrounds[backgroundIndex];
+
+  document.getElementById("dialogue").value=
+  project.dialogue||"";
+
+  alert("Project loaded.");
+}
+
+</script>
+
+</body>
+</html>
